@@ -1,0 +1,2288 @@
+<!DOCTYPE html>
+<html lang="cs">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CABRRE - Capacity Breach Report</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        ::-webkit-scrollbar {
+            width: 7px
+        }
+
+        ::-webkit-scrollbar-track {
+            -webkit-box-shadow: inset 0 0 6px #1a2030;
+            -webkit-border-radius: 10px;
+            border-radius: 10px
+        }
+
+        ::-webkit-scrollbar-thumb {
+            -webkit-border-radius: 10px;
+            border-radius: 10px;
+            background: rgb(116 112 148 / 45%);
+        }
+
+        body {
+            font-family: "Noto Sans", sans-serif;
+            background-image: url("build/background.jpg");
+            background-position: 100% 0%;
+            background-repeat: no-repeat;
+            background-size: cover;
+            line-height: 1.4;
+            padding: 5px;
+            align-items: center;
+            display: flex;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-size: 16px;
+            box-sizing: border-box;
+            overflow: hidden;
+            text-align: center;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            font-weight: 400;
+        }
+
+        p {
+            color: #ffffffc9;
+        }
+
+        .container {
+            background: linear-gradient(0deg, #080d0e00 0%, #151d20db 100%);
+            backdrop-filter: blur(30px);
+            border: 1px solid #3b3c46;
+            box-shadow: var(--shadow);
+            border-radius: 5px;
+            width: 100%;
+            height: 100%;
+            align-items: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        h1 {
+            color: #fff;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .upload-area {
+            border-radius: 4px;
+            padding: 40px;
+            text-align: center;
+            background-color: #22212b52;
+            border: 1px dashed #555773;
+            transition: all 0.3s ease;
+            width: 95%;
+            height: 90%;
+            cursor: pointer;
+        }
+
+        .upload-area.dragover {
+            background: #f3f0ff52;
+            border-color: #9c9db4;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .upload-btn {
+            background-color: #0078d0;
+            border-radius: 7px;
+            cursor: pointer;
+            font-family: system-ui, sans-serif;
+            text-align: center;
+            position: relative;
+            display: inline-block;
+            text-decoration: none;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .upload-btn::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 4%;
+            width: 92%;
+            height: 50%;
+            background-image: linear-gradient(#fff 0%, rgba(255, 255, 255, 0) 100%);
+            opacity: 0.4;
+            border-radius: 12px;
+            pointer-events: none;
+        }
+
+        .upload-btn:hover {
+            box-shadow:
+                inset 0 6px 12px rgba(0, 0, 0, 0.3),
+                inset 0 -6px 12px rgba(255, 255, 255, 0.1),
+                inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .upload-btn:hover::before {
+            opacity: 0;
+        }
+
+        .progress-container {
+            margin: 20px auto;
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            border-radius: 4px;
+            background-color: rgba(68, 68, 68, 0.3);
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #0078d0;
+            width: 0%;
+            border-bottom-right-radius: 4px;
+            border-top-right-radius: 4px;
+            transition: width 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg,
+                    rgba(255, 255, 255, 0) 0%,
+                    rgba(255, 255, 255, 0.3) 50%,
+                    rgba(255, 255, 255, 0) 100%);
+            width: 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        .progress-fill.indeterminate {
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 33%, rgba(255, 255, 255, 0.4) 50%, rgba(255, 255, 255, 0.1) 66%) #0160a5;
+            background-size: 300% 100%;
+            animation: l1 1s infinite linear;
+            width: 100%;
+        }
+
+        .progress-fill.indeterminate::after {
+            display: none;
+        }
+
+        @keyframes l1 {
+            0% {
+                background-position: right;
+            }
+
+            100% {
+                background-position: left;
+            }
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(200%);
+            }
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 10px;
+            font-weight: bold;
+            color: #ffffffe1;
+        }
+
+        .results {
+            margin-top: 30px;
+            display: none;
+            width: 100%;
+            max-width: 870px;
+        }
+
+        .info-section {
+            background-color: #22212b52;
+            border: 1px solid #272835;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-section h3 {
+            margin-top: 0;
+            color: #ffffffe1;
+        }
+
+        .data-preview {
+            max-height: 400px;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        .error {
+            color: #ffffffe1;
+            background-color: #ef606d36;
+            border: 1px solid #f5c6cb29;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .success {
+            color: #ffffffe1;
+            background-color: #80d58a2e;
+            border: 1px solid #f5c6cb29;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .control-buttons {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .control-buttons button {
+            margin: 0 10px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            position: relative;
+            background-color: #0078d0;
+        }
+
+        .control-buttons button::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 4%;
+            width: 92%;
+            height: 50%;
+            background-image: linear-gradient(#fff 0%, rgba(255, 255, 255, 0) 100%);
+            opacity: 0.4;
+            border-radius: 12px;
+            pointer-events: none;
+        }
+
+        .control-buttons button:hover {
+            box-shadow:
+                inset 0 6px 12px rgba(0, 0, 0, 0.3),
+                inset 0 -6px 12px rgba(255, 255, 255, 0.1),
+                inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .control-buttons button:hover::before {
+            opacity: 0;
+        }
+
+        .pause-btn {
+            color: #ffffffe1;
+        }
+
+        .resume-btn {
+            color: #ffffffe1;
+        }
+
+        .cancel-btn {
+            color: #ffffffe1;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-item {
+            background-color: #5c7fa112;
+            border: 1px solid #323345a8;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #94a6b7;
+            margin-top: 5px;
+        }
+
+        table {
+            border-collapse: collapse;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        th,
+        td {
+            border: 1px solid #63657fc7;
+            padding: 6px 8px;
+            text-align: center;
+            color: #ffffffc9;
+        }
+
+        th {
+            background-color: #37394f96;
+            color: #ffffffc9;
+        }
+
+        .summary-title {
+            margin-top: 30px;
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        .error-overlay {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-55%);
+            z-index: 9999;
+            background: #bd1e1442;
+            color: #ffffe9;
+            padding: 8px 16px;
+            border: 1px solid #a13c3c;
+            border-radius: 4px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .success-overlay {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-55%);
+            z-index: 9999;
+            background: rgba(29, 135, 84, 0.26);
+            /* a softer semi-transparent green */
+            color: #ffffe9;
+            padding: 8px 16px;
+            border: 1px solid #1e7e34;
+            /* darker green border */
+            border-radius: 4px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <div class="upload-area" id="uploadArea">
+            <input type="file" id="fileInput" accept=".xlsx,.xls,.csv,.txt" />
+            <div>
+                <p style="font-size: 18px; margin-bottom: 15px; color: #ffffffc9;">Přetáhněte soubor nebo klikněte pro
+                    výběr</p>
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                    Vybrat soubor
+                </button>
+            </div>
+            <p style="margin-top: 15px; font-size: 14px; color: #6c757d;">
+                Podporované formáty: .xlsx, .xls, .csv, .txt
+            </p>
+        </div>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">Zpracování...</div>
+
+            <div class="control-buttons">
+                <button class="pause-btn" id="pauseBtn">❚❚ Pozastavit</button>
+                <button class="resume-btn" id="resumeBtn" style="display: none;">▶ Pokračovat</button>
+                <button class="cancel-btn" id="cancelBtn">✖ Zrušit</button>
+            </div>
+        </div>
+
+        <div class="results" id="results">
+            <div class="info-section">
+                <h3> Informace o souboru</h3>
+                <div class="stats" id="fileStats"></div>
+            </div>
+
+            <div class="info-section">
+                <h3> Rozsah dat</h3>
+                <div id="dateRange"></div>
+            </div>
+
+            <div class="info-section">
+                <h3> Výpočet překročení limitu</h3>
+                <div style="margin-bottom: 15px;">
+                    <label for="limitInput"
+                        style="display: inline-block; width: 120px; font-weight: bold; color: #ffffffe1;">Limit:</label>
+                    <input type="number" id="limitInput" step="0.1"
+                        style="width: 120px;padding: 5px;height: 30px;border-radius: 4px;background: #706e8333;border: 1px solid #292b37;caret-color: white;color: #fff;"
+                        placeholder="např. 0.3" />
+                    <button class="upload-btn" onclick="calculateExceedance()" style="margin-left: 10px;"> Spočítat
+                        překročení</button>
+                </div>
+                <div id="calculationResults"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let processor = null;
+        let processingPaused = false;
+        let processedData = [];
+        let currentFileName = '';
+
+        // Month name mappings (from your script.js)
+        const monthNames = {
+            // English
+            'january': 1, 'jan': 1,
+            'february': 2, 'feb': 2,
+            'march': 3, 'mar': 3,
+            'april': 4, 'apr': 4,
+            'may': 5,
+            'june': 6, 'jun': 6,
+            'july': 7, 'jul': 7,
+            'august': 8, 'aug': 8,
+            'september': 9, 'sep': 9, 'sept': 9,
+            'october': 10, 'oct': 10,
+            'november': 11, 'nov': 11,
+            'december': 12, 'dec': 12,
+            // Czech
+            'leden': 1, 'led': 1,
+            'únor': 2, 'uno': 2,
+            'březen': 3, 'bře': 3, 'bre': 3,
+            'duben': 4, 'dub': 4,
+            'květen': 5, 'kvě': 5, 'kve': 5,
+            'červen': 6, 'čer': 6, 'cer': 6, 'črv': 6, 'crv': 6,
+            'červenec': 7, 'čvc': 7, 'cvc': 7,
+            'srpen': 8, 'srp': 8,
+            'září': 9, 'zář': 9, 'zar': 9,
+            'říjen': 10, 'říj': 10, 'rij': 10,
+            'listopad': 11, 'lis': 11,
+            'prosinec': 12, 'pro': 12
+        };
+
+        // Enhanced DataProcessor class (based on your script.js with improvements)
+        class DataProcessor {
+            constructor() {
+                this.data = [];
+                this.format = null;
+                this.delimiter = null;
+                this.dateFormat = null;
+                this.timeFormat = null;
+                this.decimalSeparator = null;
+                this.dataFrequency = null;
+                this.detectedDateOrder = null;
+                this.totalLines = 0;
+                this.processedLines = 0;
+                this.detectedPatterns = [];
+                this.fileExtension = null; // Store original file extension
+                // Statistics for processing results
+                this.stats = {
+                    complete: 0,        // Lines with both date and value
+                    missingValue: 0,    // Lines with date but no value
+                    corrupted: 0        // Lines that couldn't be parsed at all
+                };
+            }
+
+            async detectFormat(content, fileName, progressCallback) {
+                if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+                    return await this.processExcel(content, progressCallback);
+                } else {
+                    return await this.processTextFile(content, progressCallback);
+                }
+            }
+
+            async processExcel(base64Data, progressCallback) {
+                try {
+                    progressCallback(0, 'Načítání Excel souboru...');
+
+                    // Remove data URL prefix if present and convert more efficiently
+                    const base64 = base64Data.split(',')[1] || base64Data;
+                    const buffer = new Uint8Array(atob(base64).split('').map(char => char.charCodeAt(0)));
+
+                    progressCallback(20, 'Čtení Excel dat...');
+                    const workbook = XLSX.read(buffer, { type: 'array', cellDates: true });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, raw: false, dateNF: 'yyyy-mm-dd hh:mm:ss' });
+
+                    this.totalLines = jsonData.length;
+                    progressCallback(30, `Nalezeno ${this.totalLines.toLocaleString('cs-CZ')} řádků`);
+
+                    if (this.totalLines === 0) {
+                        console.error('No data found in Excel file');
+                        return false;
+                    }
+
+                    console.log('XLSX: Starting frequency detection with', this.totalLines, 'total lines');
+                    console.log('XLSX: First few rows:', jsonData.slice(0, 5));
+
+                    // Format detection and frequency analysis from first valid rows
+                    const sampleData = [];
+                    let sampleCount = 0;
+
+                    for (let i = 0; i < Math.min(jsonData.length, 100) && sampleCount < 20; i++) {
+                        const row = jsonData[i];
+                        if (!row || row.length === 0) {
+                            console.log(`XLSX: Row ${i} is empty or null`);
+                            continue;
+                        }
+
+                        const dateTimeStr = String(row[0] || '').trim();
+                        const valueStr = String(row[1] || '').trim();
+
+                        console.log(`XLSX: Row ${i}: dateTimeStr="${dateTimeStr}", valueStr="${valueStr}"`);
+
+                        if (dateTimeStr) {
+                            const parsedDateTime = this.parseDateTime(dateTimeStr);
+                            console.log(`XLSX: Parsed result: ${parsedDateTime}`);
+
+                            if (parsedDateTime) {
+                                sampleData.push({
+                                    dateTime: parsedDateTime,
+                                    value: this.parseValue(valueStr),
+                                    originalDate: dateTimeStr
+                                });
+                                sampleCount++;
+
+                                console.log(`XLSX: Added sample ${sampleCount}: ${parsedDateTime}`);
+
+                                if (sampleCount >= 3) break; // Get at least 3 samples quickly
+                            }
+                        }
+                    }
+
+                    console.log(`XLSX: Collected ${sampleData.length} samples for frequency detection`);
+
+                    // Detect frequency from sample data
+                    if (sampleData.length >= 2) {
+                        console.log('XLSX: Calling detectDataFrequency...');
+                        this.detectDataFrequency(sampleData);
+                        console.log(`XLSX: Detected frequency: ${this.dataFrequency}`);
+                    } else {
+                        console.log('XLSX: Not enough samples for frequency detection');
+                        this.dataFrequency = 'nedostatek dat';
+                    }
+
+                    progressCallback(40, 'Zpracování všech dat...');
+
+                    // Process ALL data in larger chunks for better performance
+                    this.data = [];
+                    const processChunkSize = 5000; // Increased chunk size
+                    let progressUpdateCounter = 0;
+
+                    for (let i = 0; i < jsonData.length; i += processChunkSize) {
+                        if (processingPaused) {
+                            await new Promise(resolve => {
+                                const checkPause = setInterval(() => {
+                                    if (!processingPaused) {
+                                        clearInterval(checkPause);
+                                        resolve();
+                                    }
+                                }, 100);
+                            });
+                        }
+
+                        const end = Math.min(i + processChunkSize, jsonData.length);
+                        const chunkResults = [];
+
+                        // Process chunk without intermediate array pushes
+                        for (let j = i; j < end; j++) {
+                            const row = jsonData[j];
+                            const result = this.processExcelRowComplete(row, j);
+                            chunkResults.push(result);
+                        }
+
+                        // Add all chunk results at once
+                        this.data.push(...chunkResults);
+                        this.processedLines = this.data.length;
+
+                        // Update progress less frequently
+                        progressUpdateCounter++;
+                        if (progressUpdateCounter % 3 === 0 || end === jsonData.length) {
+                            const progress = 40 + Math.round((end / jsonData.length) * 54);
+                            progressCallback(progress, `Zpracováno ${end.toLocaleString('cs-CZ')} z ${this.totalLines.toLocaleString('cs-CZ')} řádků`);
+                        }
+
+                        // Yield less frequently for better performance
+                        if (progressUpdateCounter % 5 === 0) {
+                            await new Promise(resolve => setTimeout(resolve, 0));
+                        }
+                    }
+
+                    progressCallback(94, `Zpracováno všech ${this.data.length.toLocaleString('cs-CZ')} záznamů`);
+
+                    return this.data.length > 0;
+                } catch (error) {
+                    console.error('Excel processing error:', error);
+                    return false;
+                }
+            }
+
+            async processTextFile(content, progressCallback) {
+                progressCallback(0, 'Rozdělování souboru na řádky...');
+
+                const lines = content.trim().split('\n');
+                this.totalLines = lines.length;
+
+                progressCallback(10, `Nalezeno ${this.totalLines.toLocaleString('cs-CZ')} řádků`);
+
+                if (this.totalLines === 0) return false;
+
+                // Skip header if present
+                let startIndex = 0;
+                if (this.totalLines > 0 && this.looksLikeHeader(lines[0])) {
+                    startIndex = 1;
+                }
+
+                // Quick delimiter detection
+                let delimiterLine = lines[startIndex];
+                for (let i = startIndex; i < Math.min(startIndex + 10, lines.length); i++) {
+                    if (lines[i] && lines[i].trim()) {
+                        delimiterLine = lines[i];
+                        break;
+                    }
+                }
+
+                this.delimiter = this.detectDelimiter(delimiterLine);
+
+                progressCallback(20, 'Detekce formátu dat...');
+
+                // Format detection and frequency analysis from sample data
+                const sampleData = [];
+                let sampleCount = 0;
+
+                for (let i = startIndex; i < Math.min(startIndex + 100, lines.length) && sampleCount < 20; i++) {
+                    if (!lines[i] || !lines[i].trim()) continue;
+
+                    const result = this.processLineComplete(lines[i], i);
+                    if (result.dateTime) {
+                        sampleData.push({
+                            dateTime: result.dateTime,
+                            value: result.value,
+                            originalDate: result.originalDate
+                        });
+                        sampleCount++;
+                    }
+                }
+
+                // Detect frequency from sample data
+                if (sampleData.length >= 2) {
+                    this.detectDataFrequency(sampleData);
+                }
+
+                progressCallback(30, 'Zpracování všech dat...');
+
+                // Process in large chunks
+                this.data = [];
+                const processChunkSize = 10000;
+                let progressUpdateInterval = Math.floor(lines.length / 20);
+
+                for (let i = startIndex; i < lines.length; i += processChunkSize) {
+                    if (processingPaused) {
+                        await new Promise(resolve => {
+                            const checkPause = setInterval(() => {
+                                if (!processingPaused) {
+                                    clearInterval(checkPause);
+                                    resolve();
+                                }
+                            }, 100);
+                        });
+                    }
+
+                    const end = Math.min(i + processChunkSize, lines.length);
+
+                    // Process entire chunk
+                    for (let j = i; j < end; j++) {
+                        const result = this.processLineComplete(lines[j], j);
+                        this.data.push(result);
+                    }
+
+                    // Update progress less frequently
+                    if (i % progressUpdateInterval === 0 || end === lines.length) {
+                        const progress = 30 + Math.round((end / lines.length) * 64);
+                        progressCallback(progress, `Zpracováno ${end.toLocaleString('cs-CZ')} řádků`);
+                    }
+
+                    // Yield only every 10th chunk
+                    if ((i / processChunkSize) % 10 === 0) {
+                        await new Promise(resolve => setTimeout(resolve, 0));
+                    }
+                }
+
+                this.processedLines = this.data.length;
+                progressCallback(94, `Zpracováno všech ${this.data.length.toLocaleString('cs-CZ')} záznamů`);
+
+                return this.data.length > 0;
+            }
+
+            // Process a single Excel row completely (for all data processing)
+            processExcelRowComplete(row, rowIndex) {
+                if (!row || row.length === 0) {
+                    this.stats.corrupted++;
+                    return {
+                        dateTime: null,
+                        value: null,
+                        originalDate: '',
+                        rowIndex: rowIndex,
+                        status: 'corrupted'
+                    };
+                }
+
+                const dateTimeStr = String(row[0] || '').trim();
+                const valueStr = String(row[1] || '').trim();
+
+                const dateTime = this.parseDateTime(dateTimeStr);
+                const value = this.parseValue(valueStr);
+
+                let status;
+                if (!dateTime) {
+                    this.stats.corrupted++;
+                    status = 'corrupted';
+                } else if (value === null && valueStr === '') {
+                    this.stats.missingValue++;
+                    status = 'missingValue';
+                } else {
+                    this.stats.complete++;
+                    status = 'complete';
+                }
+
+                return {
+                    dateTime: dateTime,
+                    value: value,
+                    originalDate: dateTimeStr,
+                    rowIndex: rowIndex,
+                    status: status
+                };
+            }
+
+            // Process a single text line completely (for all data processing)
+            processLineComplete(line, lineIndex) {
+                if (!line || !line.trim()) {
+                    this.stats.corrupted++;
+                    return {
+                        dateTime: null,
+                        value: null,
+                        originalDate: '',
+                        rowIndex: lineIndex,
+                        status: 'corrupted'
+                    };
+                }
+
+                let dateTime = null;
+                let value = null;
+                let originalDate = '';
+
+                if (this.delimiter === '.') {
+                    const match = line.match(/^(.+?)\s*(AM|PM)?\.(\d+[,.]?\d*)$/i);
+                    if (match) {
+                        originalDate = match[1] + (match[2] ? ' ' + match[2] : '');
+                        const valuePart = match[3];
+
+                        dateTime = this.parseDateTime(originalDate);
+                        value = this.parseValue(valuePart);
+                    } else {
+                        // Try without the special dot format
+                        originalDate = line.trim();
+                        dateTime = this.parseDateTime(originalDate);
+                    }
+                } else {
+                    const parts = line.split(this.delimiter).map(p => p.trim());
+
+                    if (parts.length >= 2) {
+                        const lastPart = parts[parts.length - 1];
+                        value = this.parseValue(lastPart);
+
+                        originalDate = parts.slice(0, -1).join(' ');
+                        dateTime = this.parseDateTime(originalDate);
+                    } else if (parts.length === 1) {
+                        // Only one part, assume it's a date
+                        originalDate = parts[0];
+                        dateTime = this.parseDateTime(originalDate);
+                    }
+                }
+
+                let status;
+                if (!dateTime) {
+                    this.stats.corrupted++;
+                    status = 'corrupted';
+                } else if (value === null) {
+                    this.stats.missingValue++;
+                    status = 'missingValue';
+                } else {
+                    this.stats.complete++;
+                    status = 'complete';
+                }
+
+                return {
+                    dateTime: dateTime,
+                    value: value,
+                    originalDate: originalDate,
+                    rowIndex: lineIndex,
+                    status: status
+                };
+            }
+
+            // Lightweight parsing for sampling (only valid entries)
+            parseLineForSample(line) {
+                const result = this.processLineComplete(line, 0);
+                return result.dateTime ? result : null;
+            }
+
+            looksLikeHeader(line) {
+                const headerWords = ['date', 'time', 'value', 'datum', 'čas', 'hodnota', 'cas'];
+                const lowerLine = line.toLowerCase();
+
+                for (const word of headerWords) {
+                    if (lowerLine.includes(word)) return true;
+                }
+
+                return !(/\d{1,4}[\/\-\.]\d{1,2}[\/\-\.]\d{1,4}/.test(line));
+            }
+
+            detectDelimiter(line) {
+                // Special handling for dot-separated format
+                if (line.match(/\d{1,2}\.\d{1,2}\.\d{4}\s+\d{1,2}:\d{2}:\d{2}\s*(AM|PM)?\.\d/i)) {
+                    return '.';
+                }
+
+                const delimiters = [',', ';', '\t', '|', ' '];
+                let bestDelimiter = null;
+                let maxParts = 0;
+
+                for (const delimiter of delimiters) {
+                    const parts = line.split(delimiter).filter(p => p.trim()).length;
+                    if (parts >= 2 && parts > maxParts) {
+                        maxParts = parts;
+                        bestDelimiter = delimiter;
+                    }
+                }
+
+                return bestDelimiter;
+            }
+
+            parseLine(line) {
+                if (this.delimiter === '.') {
+                    const match = line.match(/^(.+?)\s*(AM|PM)?\.(\d+[,.]?\d*)$/i);
+                    if (match) {
+                        const dateTimePart = match[1] + (match[2] ? ' ' + match[2] : '');
+                        const valuePart = match[3];
+
+                        const dateTime = this.parseDateTime(dateTimePart);
+                        const value = this.parseValue(valuePart);
+
+                        if (dateTime && value !== null) {
+                            return { dateTime, value, originalDate: dateTimePart };
+                        }
+                    }
+                }
+
+                const parts = line.split(this.delimiter).map(p => p.trim());
+                if (parts.length < 2) return null;
+
+                let dateTime = null;
+                let value = null;
+
+                const lastPart = parts[parts.length - 1];
+                value = this.parseValue(lastPart);
+
+                if (value !== null) {
+                    const dateTimePart = parts.slice(0, -1).join(' ');
+                    dateTime = this.parseDateTime(dateTimePart);
+
+                    if (dateTime) {
+                        return { dateTime, value, originalDate: dateTimePart };
+                    }
+                }
+
+                return null;
+            }
+
+            parseDateTime(str) {
+                if (!str) return null;
+                str = str.trim();
+
+                // Fast path: Excel format "11/27/2001  7:00:00 AM" (most common)
+                if (str.includes('AM') || str.includes('PM')) {
+                    const parts = str.split(/\s+/);
+                    if (parts.length >= 3) {
+                        const datePart = parts[0]; // "11/27/2001"
+                        const timePart = parts[1]; // "7:00:00"
+                        const ampmPart = parts[2]; // "AM"
+
+                        const dateMatch = datePart.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+                        const timeMatch = timePart.match(/^(\d{1,2}):(\d{2}):(\d{2})$/);
+
+                        if (dateMatch && timeMatch) {
+                            const month = parseInt(dateMatch[1]);
+                            const day = parseInt(dateMatch[2]);
+                            const year = parseInt(dateMatch[3]);
+                            let hour = parseInt(timeMatch[1]);
+                            const minute = parseInt(timeMatch[2]);
+                            const second = parseInt(timeMatch[3]);
+
+                            if (ampmPart === 'PM' && hour !== 12) hour += 12;
+                            if (ampmPart === 'AM' && hour === 12) hour = 0;
+
+                            // Store pattern only occasionally for performance
+                            if (this.detectedPatterns.length < 10 && !this.detectedPatterns.includes(str.substring(0, 20))) {
+                                this.detectedPatterns.push(str.substring(0, 20));
+                            }
+
+                            return new Date(year, month - 1, day, hour, minute, second);
+                        }
+                    }
+                }
+
+                // Fast path: Standard format "27/11/2001 07:00:00"
+                const standardMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})$/);
+                if (standardMatch) {
+                    // Store pattern only occasionally
+                    if (this.detectedPatterns.length < 10 && !this.detectedPatterns.includes(str.substring(0, 20))) {
+                        this.detectedPatterns.push(str.substring(0, 20));
+                    }
+                    return this.constructDateTimeFast(
+                        standardMatch[1], standardMatch[2], standardMatch[3],
+                        standardMatch[4], standardMatch[5], standardMatch[6]
+                    );
+                }
+
+                // Fallback to comprehensive parsing
+                const result = this.parseNumericDate(str) || this.parseNamedMonthDate(str);
+                if (result && this.detectedPatterns.length < 10 && !this.detectedPatterns.includes(str.substring(0, 20))) {
+                    this.detectedPatterns.push(str.substring(0, 20));
+                }
+                return result;
+            }
+
+            // Fast date construction without validation overhead
+            constructDateTimeFast(part1, part2, part3, hour, minute, second) {
+                const p1 = parseInt(part1);
+                const p2 = parseInt(part2);
+                const p3 = parseInt(part3);
+                const h = hour ? parseInt(hour) : 0;
+                const m = minute ? parseInt(minute) : 0;
+                const s = second ? parseInt(second) : 0;
+
+                let year, month, day;
+
+                if (p3 > 1900) {
+                    // MM/DD/YYYY or DD/MM/YYYY
+                    year = p3;
+                    if (!this.detectedDateOrder) {
+                        this.detectedDateOrder = p1 > 12 ? 'DMY' : 'MDY';
+                    }
+                    if (this.detectedDateOrder === 'DMY') {
+                        day = p1; month = p2;
+                    } else {
+                        month = p1; day = p2;
+                    }
+                } else {
+                    // YYYY/MM/DD
+                    year = p1; month = p2; day = p3;
+                }
+
+                // Quick validation
+                if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+
+                return new Date(year, month - 1, day, h, m, s);
+            }
+
+            parseNumericDate(str) {
+                // Simplified patterns for better performance
+                const ampmMatch = str.match(/(\d{1,4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,4})\s+(\d{1,2}):(\d{2}):(\d{2})\s*(AM|PM)/i);
+                if (ampmMatch) {
+                    return this.constructDateTime(ampmMatch[1], ampmMatch[2], ampmMatch[3],
+                        ampmMatch[4], ampmMatch[5], ampmMatch[6], ampmMatch[7]);
+                }
+
+                const standardMatch = str.match(/(\d{1,4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,4})\s+(\d{1,2}):(\d{2}):(\d{2})/);
+                if (standardMatch) {
+                    return this.constructDateTime(standardMatch[1], standardMatch[2], standardMatch[3],
+                        standardMatch[4], standardMatch[5], standardMatch[6]);
+                }
+
+                return null;
+            }
+
+            parseNamedMonthDate(str) {
+                const words = str.split(/[\s,\-\.]+/);
+                let day = null, month = null, year = null;
+                let hour = null, minute = null, second = null, ampm = null;
+
+                // Find time components
+                for (let i = 0; i < words.length; i++) {
+                    const word = words[i];
+                    if (word.match(/^\d{1,2}:\d{2}(:\d{2})?$/)) {
+                        const timeParts = word.split(':');
+                        hour = parseInt(timeParts[0]);
+                        minute = parseInt(timeParts[1]);
+                        second = timeParts[2] ? parseInt(timeParts[2]) : 0;
+
+                        if (i + 1 < words.length && words[i + 1].match(/^(AM|PM)$/i)) {
+                            ampm = words[i + 1].toUpperCase();
+                        }
+                    }
+                }
+
+                // Find date components
+                for (const word of words) {
+                    const num = parseInt(word);
+
+                    if (!isNaN(num)) {
+                        if (num > 1900 && num < 2100) {
+                            year = num;
+                        } else if (num >= 1 && num <= 31 && !day) {
+                            day = num;
+                        }
+                    } else {
+                        const monthNum = this.parseMonthName(word);
+                        if (monthNum) {
+                            month = monthNum;
+                        }
+                    }
+                }
+
+                if (day && month && year) {
+                    if (hour !== null) {
+                        if (ampm === 'PM' && hour !== 12) hour += 12;
+                        if (ampm === 'AM' && hour === 12) hour = 0;
+                        return new Date(year, month - 1, day, hour, minute || 0, second || 0);
+                    } else {
+                        return new Date(year, month - 1, day);
+                    }
+                }
+
+                return null;
+            }
+
+            constructDateTime(part1, part2, part3, hour, minute, second, ampm) {
+                const p1 = parseInt(part1);
+                const p2 = parseInt(part2);
+                const p3 = parseInt(part3);
+
+                let year, month, day;
+
+                if (p1 > 1900) {
+                    year = p1; month = p2; day = p3;
+                } else if (p3 > 1900) {
+                    year = p3;
+                    if (!this.detectedDateOrder) {
+                        this.detectedDateOrder = (p1 > 12 && p2 <= 12) ? 'DMY' : 'MDY';
+                    }
+                    if (this.detectedDateOrder === 'DMY') {
+                        day = p1; month = p2;
+                    } else {
+                        month = p1; day = p2;
+                    }
+                } else {
+                    year = p3 < 100 ? 2000 + p3 : p3;
+                    if (!this.detectedDateOrder) {
+                        this.detectedDateOrder = (p1 > 12 && p2 <= 12) ? 'DMY' : 'MDY';
+                    }
+                    if (this.detectedDateOrder === 'DMY') {
+                        day = p1; month = p2;
+                    } else {
+                        month = p1; day = p2;
+                    }
+                }
+
+                if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+
+                let h = hour ? parseInt(hour) : 0;
+                let m = minute ? parseInt(minute) : 0;
+                let s = second ? parseInt(second) : 0;
+
+                if (ampm) {
+                    const ampmUpper = ampm.toUpperCase();
+                    if (ampmUpper === 'PM' && h !== 12) h += 12;
+                    if (ampmUpper === 'AM' && h === 12) h = 0;
+                }
+
+                return new Date(year, month - 1, day, h, m, s);
+            }
+
+            detectDateOrder(num1, num2) {
+                // For Excel files with AM/PM format, it's very likely MM/DD/YYYY
+                // If one number is clearly a day (> 12), we can determine the order
+                if (num1 > 12 && num2 <= 12) {
+                    console.log(`Date order DMY detected: ${num1} > 12, ${num2} <= 12`);
+                    return 'DMY';
+                } else if (num2 > 12 && num1 <= 12) {
+                    console.log(`Date order MDY detected: ${num2} > 12, ${num1} <= 12`);
+                    return 'MDY';
+                }
+
+                // For ambiguous cases (both <= 12), if we see AM/PM it's likely US format (MDY)
+                // But if we see patterns like 27/11, assume DMY
+                if (num1 > 20 && num2 <= 12) {
+                    console.log(`Date order DMY detected: ${num1} > 20, ${num2} <= 12`);
+                    return 'DMY';
+                }
+
+                // Default to MDY for Excel files (common US format with AM/PM)
+                console.log(`Date order MDY assumed for ambiguous case: ${num1}/${num2}`);
+                return 'MDY';
+            }
+
+            parseMonthName(str) {
+                const normalized = str.toLowerCase().replace(/[.,]/g, '');
+                return monthNames[normalized] || null;
+            }
+
+            parseValue(str) {
+                if (!str) return null;
+
+                str = str.replace(/^\.+/, '');
+                const normalized = str.replace(',', '.');
+                const value = parseFloat(normalized);
+                return isNaN(value) ? null : value;
+            }
+
+            detectDataFrequency(sampleData) {
+                if (sampleData.length < 2) {
+                    this.dataFrequency = 'nedostatek dat';
+                    return;
+                }
+
+                // Sort sample data by date to ensure proper order
+                sampleData.sort((a, b) => a.dateTime - b.dateTime);
+
+                const timeDiffs = [];
+                for (let i = 1; i < sampleData.length; i++) {
+                    const diff = sampleData[i].dateTime - sampleData[i - 1].dateTime;
+                    if (diff > 0) { // Only positive differences
+                        timeDiffs.push(diff);
+                    }
+                }
+
+                if (timeDiffs.length === 0) {
+                    this.dataFrequency = 'nekonzistentní';
+                    return;
+                }
+
+                // Calculate median instead of average for better accuracy
+                timeDiffs.sort((a, b) => a - b);
+                const medianDiff = timeDiffs[Math.floor(timeDiffs.length / 2)];
+
+                // Define time constants in milliseconds
+                const minuteInMs = 60 * 1000;
+                const hourInMs = 60 * minuteInMs;
+                const dayInMs = 24 * hourInMs;
+                const weekInMs = 7 * dayInMs;
+                const monthInMs = 30 * dayInMs;
+
+                // More precise frequency detection with tolerance ranges
+                if (medianDiff < 45 * minuteInMs) {
+                    this.dataFrequency = 'minutové';
+                } else if (medianDiff < 90 * minuteInMs) {
+                    this.dataFrequency = 'hodinové';
+                } else if (medianDiff < 6 * hourInMs) {
+                    this.dataFrequency = 'několikahodinové';
+                } else if (medianDiff < 18 * hourInMs) {
+                    this.dataFrequency = '12-hodinové';
+                } else if (medianDiff < 36 * hourInMs) {
+                    this.dataFrequency = 'denní';
+                } else if (medianDiff < 4 * dayInMs) {
+                    this.dataFrequency = 'několikadenní';
+                } else if (medianDiff < 10 * dayInMs) {
+                    this.dataFrequency = 'týdenní';
+                } else if (medianDiff < 45 * dayInMs) {
+                    this.dataFrequency = 'měsíční';
+                } else {
+                    this.dataFrequency = 'řídké (delší než měsíc)';
+                }
+
+                // Additional validation: check consistency
+                const avgDiff = timeDiffs.reduce((a, b) => a + b, 0) / timeDiffs.length;
+                const variance = timeDiffs.reduce((sum, diff) => sum + Math.pow(diff - avgDiff, 2), 0) / timeDiffs.length;
+                const standardDeviation = Math.sqrt(variance);
+                const coefficientOfVariation = standardDeviation / avgDiff;
+
+                // If data is too inconsistent, mark as irregular
+                if (coefficientOfVariation > 0.5) {
+                    this.dataFrequency += ' (nepravidelné)';
+                }
+
+                console.log(`Frequency detection: median=${medianDiff}ms, avg=${avgDiff}ms, cv=${coefficientOfVariation.toFixed(2)}, result=${this.dataFrequency}`);
+            }
+
+            async getDateRange() {
+                if (this.data.length === 0) return null;
+
+                try {
+                    let minTime = this.data[0].dateTime.getTime();
+                    let maxTime = this.data[0].dateTime.getTime();
+
+                    const chunkSize = 10000;
+                    const maxIterations = Math.ceil(this.data.length / chunkSize);
+                    let iterations = 0;
+
+                    for (let i = 0; i < this.data.length; i += chunkSize) {
+                        const end = Math.min(i + chunkSize, this.data.length);
+
+                        for (let j = i; j < end; j++) {
+                            const time = this.data[j].dateTime.getTime();
+                            if (time < minTime) minTime = time;
+                            if (time > maxTime) maxTime = time;
+                        }
+
+                        iterations++;
+                        if (iterations < maxIterations) {
+                            await new Promise(resolve => setTimeout(resolve, 0));
+                        }
+
+                        if (iterations > maxIterations + 10) {
+                            console.error('Date range calculation exceeded expected iterations');
+                            break;
+                        }
+                    }
+
+                    const minDate = new Date(minTime);
+                    const maxDate = new Date(maxTime);
+
+                    return {
+                        start: minDate.toLocaleDateString('cs-CZ'),
+                        end: maxDate.toLocaleDateString('cs-CZ'),
+                        startDate: minDate,
+                        endDate: maxDate
+                    };
+                } catch (error) {
+                    console.error('Error calculating date range:', error);
+                    return {
+                        start: 'Neznámé',
+                        end: 'Neznámé'
+                    };
+                }
+            }
+
+            // Convert to standardized DD/MM/YYYY HH:MM:SS VALUE format
+            getStandardizedData() {
+                return this.data.map(item => {
+                    if (!item.dateTime) {
+                        // Corrupted entry
+                        return `CORRUPTED_ENTRY ${item.originalDate || ''} ${item.value || ''}`.trim();
+                    }
+
+                    const date = item.dateTime;
+                    const dd = String(date.getDate()).padStart(2, '0');
+                    const mm = String(date.getMonth() + 1).padStart(2, '0');
+                    const yyyy = date.getFullYear();
+                    const hh = String(date.getHours()).padStart(2, '0');
+                    const min = String(date.getMinutes()).padStart(2, '0');
+                    const ss = String(date.getSeconds()).padStart(2, '0');
+
+                    const valueStr = item.value !== null ? item.value.toString() : '';
+
+                    return `${dd}/${mm}/${yyyy} ${hh}:${min}:${ss} ${valueStr}`.trim();
+                });
+            }
+
+            // Get array format for easier manipulation
+            getDataArray() {
+                return this.data.map(item => {
+                    if (!item.dateTime) {
+                        return [null, item.value || null, item.status]; // [dateTime, value, status]
+                    }
+
+                    const date = item.dateTime;
+                    const dd = String(date.getDate()).padStart(2, '0');
+                    const mm = String(date.getMonth() + 1).padStart(2, '0');
+                    const yyyy = date.getFullYear();
+                    const hh = String(date.getHours()).padStart(2, '0');
+                    const min = String(date.getMinutes()).padStart(2, '0');
+                    const ss = String(date.getSeconds()).padStart(2, '0');
+
+                    const dateTimeString = `${dd}/${mm}/${yyyy} ${hh}:${min}:${ss}`;
+
+                    return [dateTimeString, item.value, item.status];
+                });
+            }
+        }
+
+        // File upload handlers
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        // Control buttons
+        document.getElementById('pauseBtn').addEventListener('click', () => {
+            processingPaused = true;
+            document.getElementById('pauseBtn').style.display = 'none';
+            document.getElementById('resumeBtn').style.display = 'inline-block';
+        });
+
+        document.getElementById('resumeBtn').addEventListener('click', () => {
+            processingPaused = false;
+            document.getElementById('pauseBtn').style.display = 'inline-block';
+            document.getElementById('resumeBtn').style.display = 'none';
+        });
+
+        document.getElementById('cancelBtn').addEventListener('click', () => {
+            location.reload();
+        });
+
+        async function handleFile(file) {
+            currentFileName = file.name;
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+
+            if (!['xlsx', 'xls', 'csv', 'txt'].includes(fileExtension)) {
+                showError('Nepodporovaný formát souboru. Používejte .xlsx, .xls, .csv nebo .txt');
+                return;
+            }
+
+            showProgress();
+            processor = new DataProcessor();
+            processor.fileExtension = fileExtension; // Store for later reference
+
+            try {
+                let content;
+
+                if (fileExtension === 'xlsx' || fileExtension === 'xls') {
+                    content = await readFileAsBase64(file);
+                } else {
+                    content = await readFileAsText(file);
+                }
+
+                const success = await processor.detectFormat(content, file.name, updateProgress);
+
+                if (success) {
+                    updateProgress(100, 'Dokončeno!');
+                    await displayResults();
+                } else {
+                    showError('Nepodařilo se zpracovat soubor. Zkontrolujte formát dat.');
+                }
+
+            } catch (error) {
+                console.error('Processing error:', error);
+                showError('Chyba při zpracování souboru: ' + error.message);
+            }
+        }
+
+        function readFileAsBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function readFileAsText(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsText(file, 'utf-8');
+            });
+        }
+
+        function showProgress() {
+            document.getElementById('progressContainer').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('uploadArea').style.display = 'none';
+            clearErrors();
+        }
+
+        function updateProgress(percent, message) {
+            document.getElementById('progressFill').style.width = percent + '%';
+            document.getElementById('progressText').textContent = message;
+        }
+
+        async function displayResults() {
+            processedData = processor.getStandardizedData();
+            const dataArray = processor.getDataArray(); // For easier future manipulation
+            const dateRange = await processor.getDateRange();
+
+            // Store the array globally for future use
+            window.processedDataArray = dataArray;
+
+            // Get the actual file extension
+            const actualFileType = processor.fileExtension || currentFileName.split('.').pop().toUpperCase();
+
+            // File stats with detailed breakdown
+            const statsHtml = `
+                <div class="stat-item">
+                    <div class="stat-value">${processor.data.length.toLocaleString('cs-CZ')}</div>
+                    <div class="stat-label">Celkem záznamů</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${processor.stats.complete.toLocaleString('cs-CZ')}</div>
+                    <div class="stat-label">Kompletní záznamy</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${processor.stats.missingValue.toLocaleString('cs-CZ')}</div>
+                    <div class="stat-label">Chybí hodnota</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${processor.stats.corrupted.toLocaleString('cs-CZ')}</div>
+                    <div class="stat-label">Poškozené/nerozpoznané</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${processor.dataFrequency || 'Nedetekováno'}</div>
+                    <div class="stat-label">Frekvence dat</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${actualFileType}</div>
+                    <div class="stat-label">Typ souboru</div>
+                </div>
+            `;
+
+
+            // Date range
+            const rangeHtml = `
+                <p><strong>Od:</strong> ${dateRange?.start || 'Neznámé'}</p>
+                <p><strong>Do:</strong> ${dateRange?.end || 'Neznámé'}</p>
+            `;
+
+            document.getElementById('fileStats').innerHTML = statsHtml;
+            document.getElementById('dateRange').innerHTML = rangeHtml;
+
+            document.getElementById('progressContainer').style.display = 'none';
+            document.getElementById('results').style.display = 'block';
+
+            showSuccess(`Úspěšně zpracováno ${processor.data.length.toLocaleString('cs-CZ')} záznamů! (${processor.stats.complete.toLocaleString('cs-CZ')} kompletních)`);
+
+            // Log the array to console for debugging
+            console.log('Processed data array:', window.processedDataArray);
+            console.log('Processing statistics:', processor.stats);
+            console.log('Detected frequency:', processor.dataFrequency);
+        }
+
+        function downloadCSV() {
+            let csvContent = 'Datum,Čas,Hodnota,Status\n';
+
+            const dataArray = window.processedDataArray || processor.getDataArray();
+
+            csvContent += dataArray.map(([dateTime, value, status]) => {
+                if (!dateTime) {
+                    return `"CORRUPTED","","${value || ''}","${status}"`;
+                }
+
+                const parts = dateTime.split(' ');
+                const date = parts[0] || '';
+                const time = parts[1] || '';
+                const val = value !== null ? value : '';
+
+                return `"${date}","${time}","${val}","${status}"`;
+            }).join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `complete_${currentFileName.split('.')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function copyToClipboard() {
+            navigator.clipboard.writeText(processedData.join('\n')).then(() => {
+                showSuccess('Data zkopírována do schránky!');
+            }).catch(err => {
+                showError('Nepodařilo se zkopírovat data do schránky.');
+            });
+        }
+
+        function showError(message) {
+            clearMessages();
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-overlay';
+            errorDiv.textContent = message;
+            document.body.appendChild(errorDiv);
+
+            setTimeout(() => {
+                errorDiv.style.transition = 'opacity 0.5s ease-out';
+                errorDiv.style.opacity = '0';
+                setTimeout(() => errorDiv.remove(), 500);
+            }, 6000);
+        }
+
+
+        function showSuccess(message) {
+            clearMessages();
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-overlay';
+            successDiv.textContent = message;
+            document.body.appendChild(successDiv); // append to body for global stacking
+
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                successDiv.style.transition = 'opacity 0.5s ease-out';
+                successDiv.style.opacity = '0';
+                setTimeout(() => successDiv.remove(), 500);
+            }, 6000);
+        }
+
+
+        function clearMessages() {
+            const messages = document.querySelectorAll('.error, .success');
+            messages.forEach(msg => msg.remove());
+        } function clearErrors() {
+            const errors = document.querySelectorAll('.error');
+            errors.forEach(error => error.remove());
+        }
+
+        // Czech month names for calculation results
+        const czechMonths = {
+            1: 'leden',
+            2: 'únor',
+            3: 'březen',
+            4: 'duben',
+            5: 'květen',
+            6: 'červen',
+            7: 'červenec',
+            8: 'srpen',
+            9: 'září',
+            10: 'říjen',
+            11: 'listopad',
+            12: 'prosinec'
+        };
+
+        function calculateExceedance() {
+            const limitValue = parseFloat(document.getElementById('limitInput').value);
+
+            if (!window.processedDataArray || window.processedDataArray.length === 0) {
+                showError('Nejsou dostupná žádná zpracovaná data pro výpočet.');
+                return;
+            }
+            if (isNaN(limitValue)) {
+                showError('Prosím, zadejte platný číselný limit.');
+                return;
+            }
+
+            // Clear everything in container and create 4-section layout
+            const container = document.querySelector('.container');
+            container.innerHTML = `
+            <div class="grid-layout">
+                <div class="grid-section top-left">
+                    <h3>Průběh hodnot v čase vs. limitní průtok</h3>
+                    <canvas id="timeSeriesChart"></canvas>
+                </div>
+                <div class="grid-section top-right"></div>
+                <div class="grid-section bottom-left">
+                    <h3>Průměrný počet překročení za rok</h3>
+                    <canvas id="exceedanceChart"></canvas>
+                </div>
+                <div class="grid-section bottom-right">
+                    <h3>Celkový počet dní v měsíci, kdy je překročen limitní průtok</h3>
+                    <canvas id="daysChart"></canvas>
+                </div>
+            </div>`;
+
+            // Add CSS for the grid layout
+            const style = document.createElement('style');
+            style.textContent = `
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 5px;
+            width: 100%;
+            height: 100%;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+        
+        .grid-section {
+            background-color: #22212b52;
+            border: 1px solid #272835;
+            border-radius: 5px;
+            padding: 15px;
+            padding-top: 0;
+            padding-bottom: 0;
+            overflow-y: auto;
+        }
+        
+        .grid-section h3 {
+            margin-top: 0;
+            color: #ffffffe1;
+            font-size: 16px;
+            margin-bottom: 15px;
+            transform: translate(0, 10px);
+        }
+        
+        .grid-section table {
+            width: 100%;
+            font-size: 12px;
+        }
+        
+        .grid-section .summary-title {
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .grid-section canvas {
+            flex: 1;
+            max-height: 400px;
+        }
+    `;
+            document.head.appendChild(style);
+
+            // Get the top-right section for the table
+            const topRightSection = document.querySelector('.top-right');
+
+            // Convert array data to the same format as excel_calc_demo
+            const rawRows = window.processedDataArray.map(row => ({
+                Date: row[0], // dateTime string
+                Value: row[1]  // value
+            }));
+
+            const totalRows = rawRows.length; // "celkový počet řádků" (včetně prázdných Value)
+
+            // Each row.Date can be:
+            //  - String (e.g., "27/11/2001 07:00:00")
+            //  - or null for corrupted entries
+            // rawValue convert to number (empty cell → NaN)
+            const rows = rawRows.map((row) => ({
+                rawDate: row.Date,            // String or null
+                rawValue: parseFloat(row.Value) // NaN if empty
+            }));
+
+            // ---------------------------------------------------------
+            // 1) Process individual rows: day, flooded, exceedance
+            // ---------------------------------------------------------
+            const processedRows = [];
+            let prevFlooded = 0;
+
+            rows.forEach((r, idx) => {
+                let dateObj = null;
+
+                // --- if rawDate is String, try to parse ---
+                if (typeof r.rawDate === 'string') {
+                    const txt = r.rawDate.trim();
+                    // Should be in format "DD/MM/YYYY HH:MM:SS" from our standardization
+                    if (txt.includes('/')) {
+                        dateObj = parseDateDDMMYYYY(txt);
+                    }
+                }
+
+                // If we couldn't create a valid Date, skip
+                if (!dateObj) {
+                    console.warn(`Row ${idx + 1} doesn't have valid date: "${r.rawDate}". Skipped.`);
+                    return;
+                }
+
+                // Day and month:
+                const dayNum = dateObj.getDate();
+                const monthNum = dateObj.getMonth() + 1; // 1–12
+
+                // floodedFlag = 1 if rawValue > limitValue, else 0
+                const floodedFlag = (!isNaN(r.rawValue) && r.rawValue > limitValue) ? 1 : 0;
+                // exceedanceFlag = 1 only when floodedFlag goes from 0→1
+                const exceedanceFlag = (floodedFlag === 1 && prevFlooded === 0) ? 1 : 0;
+                prevFlooded = floodedFlag;
+
+                processedRows.push({
+                    dateObj,
+                    dateString: r.rawDate,
+                    value: r.rawValue,
+                    day: dayNum,
+                    month: monthNum,
+                    flooded: floodedFlag,
+                    exceedance: exceedanceFlag
+                });
+            });
+
+            // If we didn't read any valid rows, show error
+            if (processedRows.length === 0) {
+                showError('Žádné platné řádky k zpracování.');
+                return;
+            }
+
+            // ---------------------------------------------------------
+            // 2) Calculate monthly summary according to Excel formulas
+            // ---------------------------------------------------------
+            const totalRowsFloat = totalRows;            // number of rows total (including empty)
+            const hoursPerYear = 365 * 24;              // 8760
+
+            // a) First calculate for each month:
+            //    - sumFloodedHours[m]: how many hours (rows) is floodedFlag=1 for month m
+            //    - exceedancesPerMonth[m]: how many is exceedanceFlag=1 for month m
+            const sumFloodedHours = {};       // { m: number of flooded hours }
+            const exceedancesPerMonth = {};   // { m: number of exceedances }
+
+            processedRows.forEach(r => {
+                const m = r.month;
+                // flooded hours
+                if (!sumFloodedHours[m]) sumFloodedHours[m] = 0;
+                sumFloodedHours[m] += r.flooded;
+
+                // exceedances
+                if (!exceedancesPerMonth[m]) exceedancesPerMonth[m] = 0;
+                exceedancesPerMonth[m] += r.exceedance;
+            });
+
+            // b) Create summaryArray[1..12]
+            const summaryArray = [];
+            for (let m = 1; m <= 12; m++) {
+                // number of hours when month m was flooded
+                const floodedHours = sumFloodedHours[m] || 0;
+                // number of days = ROUND(floodedHours/24; 0)
+                const daysCount = Math.round(floodedHours / 24);
+
+                const exceedCount = exceedancesPerMonth[m] || 0;
+                // number of years in data = totalRows / 8760
+                const totalYears = totalRowsFloat / hoursPerYear;
+                // average per year = exceedCount / totalYears
+                let avgPerYear = 0;
+                if (totalYears > 0) {
+                    avgPerYear = Math.round((exceedCount / totalYears) * 10) / 10; // 1 decimal place
+                }
+
+                summaryArray.push({
+                    monthNum: m,
+                    monthName: czechMonths[m],
+                    daysCount: daysCount,
+                    exceedCount: exceedCount,
+                    avgPerYear: avgPerYear
+                });
+            }
+
+            // c) Total sums for bottom row and summary
+            const totalDaysAll = summaryArray.reduce((acc, o) => acc + o.daysCount, 0);
+            const totalExAll = summaryArray.reduce((acc, o) => acc + o.exceedCount, 0);
+            // total average per year = totalExAll / totalYears
+            const totalYearsAll = totalRowsFloat / hoursPerYear;
+            const avgAllPerYear = totalYearsAll > 0
+                ? Math.round((totalExAll / totalYearsAll) * 10) / 10
+                : 0;
+
+            // ---------------------------------------------------------
+            // 3) Draw summary table per month in top-right section
+            // ---------------------------------------------------------
+
+            const summaryTable = document.createElement('table');
+            const hdr = document.createElement('tr');
+            ['Měsíc', 'číslo měsíce', 'počet dní', 'počet překročení', 'průměrné překročení/rok']
+                .forEach(h => {
+                    const th = document.createElement('th');
+                    th.textContent = h;
+                    hdr.appendChild(th);
+                });
+            summaryTable.appendChild(hdr);
+
+            summaryArray.forEach(o => {
+                const tr = document.createElement('tr');
+                [o.monthName, o.monthNum, o.daysCount, o.exceedCount, o.avgPerYear]
+                    .forEach(val => {
+                        const td = document.createElement('td');
+                        td.textContent = val;
+                        tr.appendChild(td);
+                    });
+                summaryTable.appendChild(tr);
+            });
+
+            // "Total" row
+            const totalRow = document.createElement('tr');
+            const tdSumLabel = document.createElement('td');
+            tdSumLabel.textContent = 'Celkem';
+            tdSumLabel.colSpan = 2;
+            tdSumLabel.style.fontWeight = 'bold';
+            totalRow.appendChild(tdSumLabel);
+
+            const tdTotalDays = document.createElement('td');
+            tdTotalDays.textContent = totalDaysAll;
+            totalRow.appendChild(tdTotalDays);
+
+            const tdTotalEx = document.createElement('td');
+            tdTotalEx.textContent = totalExAll;
+            totalRow.appendChild(tdTotalEx);
+
+            const tdAvgAll = document.createElement('td');
+            tdAvgAll.textContent = avgAllPerYear;
+            totalRow.appendChild(tdAvgAll);
+
+            summaryTable.appendChild(totalRow);
+            topRightSection.appendChild(summaryTable);
+
+            // ---------------------------------------------------------
+            // 4) Create all charts including time series
+            // ---------------------------------------------------------
+            createAllCharts(summaryArray, processedRows, limitValue);
+        }
+
+        function createAllCharts(summaryArray, processedRows, limitValue) {
+
+            const monthLabels = summaryArray.map(item => item.monthName);
+            const avgPerYearData = summaryArray.map(item => item.avgPerYear);
+            const daysCountData = summaryArray.map(item => item.daysCount);
+
+            // Chart colors
+            const chartColors = {
+                primary: '#4CAF50',
+                secondary: '#2196F3',
+                limit: '#FF6B6B',
+                background: 'rgba(76, 175, 80, 0.1)',
+                backgroundSecondary: 'rgba(33, 150, 243, 0.1)'
+            };
+
+            // ---------------------------------------------------------
+            // 1) Create Time Series Chart (top-left)
+            // ---------------------------------------------------------
+            createTimeSeriesChart(processedRows, limitValue, chartColors);
+
+            // ---------------------------------------------------------
+            // 2) Create Exceedance Chart (bottom-left)
+            // ---------------------------------------------------------
+            const exceedanceCtx = document.getElementById('exceedanceChart').getContext('2d');
+            new Chart(exceedanceCtx, {
+                type: 'bar',
+                data: {
+                    labels: monthLabels,
+                    datasets: [{
+                        label: 'Průměrné překročení/rok',
+                        data: avgPerYearData,
+                        backgroundColor: chartColors.background,
+                        borderColor: chartColors.primary,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#ffffffe1'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#ffffffe1'
+                            },
+                            grid: {
+                                color: '#272835'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#ffffffe1'
+                            },
+                            grid: {
+                                color: '#272835'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // ---------------------------------------------------------
+            // 3) Create Days Chart (bottom-right)
+            // ---------------------------------------------------------
+            const daysCtx = document.getElementById('daysChart').getContext('2d');
+            new Chart(daysCtx, {
+                type: 'bar',
+                data: {
+                    labels: monthLabels,
+                    datasets: [{
+                        label: 'Počet dní',
+                        data: daysCountData,
+                        backgroundColor: chartColors.backgroundSecondary,
+                        borderColor: chartColors.secondary,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#ffffffe1'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#ffffffe1'
+                            },
+                            grid: {
+                                color: '#272835'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#ffffffe1'
+                            },
+                            grid: {
+                                color: '#272835'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createTimeSeriesChart(processedRows, limitValue, chartColors) {
+            console.log('Starting time series chart creation...');
+
+            // Get canvas element
+            const canvas = document.getElementById('timeSeriesChart');
+            if (!canvas) {
+                console.error('Canvas element not found');
+                return;
+            }
+
+            try {
+                // Destroy existing chart instance if it exists
+                if (window.timeSeriesChart) {
+                    try {
+                        window.timeSeriesChart.destroy();
+                    } catch (e) {
+                        console.warn('Error destroying existing chart:', e);
+                    }
+                    window.timeSeriesChart = null;
+                }
+
+                console.log(`Processing ${processedRows.length} rows for chart...`);
+
+                // Process ALL data without limits
+                const validRows = [];
+
+                for (let i = 0; i < processedRows.length; i++) {
+                    const row = processedRows[i];
+
+                    // Simple validation
+                    if (row &&
+                        row.dateObj &&
+                        row.dateObj.getTime &&
+                        !isNaN(row.dateObj.getTime()) &&
+                        typeof row.value === 'number' &&
+                        !isNaN(row.value) &&
+                        isFinite(row.value)) {
+
+                        validRows.push({
+                            date: row.dateObj,
+                            value: row.value,
+                            year: row.dateObj.getFullYear()
+                        });
+                    }
+                }
+
+                console.log(`Found ${validRows.length} valid data points from full dataset`);
+
+                if (validRows.length === 0) {
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = '#ffffffe1';
+                    ctx.font = '16px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Žádná platná data pro graf', canvas.width / 2, canvas.height / 2);
+                    return;
+                }
+
+                // Sort by date
+                validRows.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+                // Get date range from ALL data
+                const startYear = validRows[0].year;
+                const endYear = validRows[validRows.length - 1].year;
+
+                // Use reduce to find max value - avoid spread operator stack overflow
+                const maxValue = validRows.reduce((max, row) => {
+                    return row.value > max ? row.value : max;
+                }, -Infinity);
+
+                const yAxisMax = Math.ceil(maxValue * 1.25);
+
+                console.log(`Full date range: ${startYear} - ${endYear}, Max value: ${maxValue}`);
+
+                // Sample data for performance (but use more points for better representation)
+                let sampledData = validRows;
+                const maxDisplayPoints = 2000; // Increased from 500 to show more detail
+
+                if (validRows.length > maxDisplayPoints) {
+                    const step = Math.floor(validRows.length / maxDisplayPoints);
+                    sampledData = [];
+                    for (let i = 0; i < validRows.length; i += step) {
+                        sampledData.push(validRows[i]);
+                    }
+                    console.log(`Sampled ${sampledData.length} points from ${validRows.length} total points`);
+                }
+
+                // Create labels showing years across the full range
+                const totalYears = endYear - startYear + 1;
+                const labels = sampledData.map((row, index) => {
+                    // Show year labels strategically across the timeline
+                    const yearInterval = Math.max(1, Math.floor(totalYears / 10)); // Show ~10 year labels max
+                    const currentYear = row.year;
+
+                    // Show label if it's a year divisible by our interval, or first/last point
+                    if (index === 0 || index === sampledData.length - 1 ||
+                        (currentYear - startYear) % yearInterval === 0) {
+                        return currentYear.toString();
+                    }
+                    return '';
+                });
+
+                // Prepare chart data
+                const flowValues = sampledData.map(row => row.value);
+                const limitData = new Array(sampledData.length).fill(limitValue);
+
+                console.log('Creating Chart.js instance...');
+
+                // Create the chart
+                const ctx = canvas.getContext('2d');
+
+                window.timeSeriesChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Průtok',
+                                data: flowValues,
+                                borderColor: '#2196F3',
+                                backgroundColor: 'transparent',
+                                borderWidth: 1,
+                                fill: false,
+                                pointRadius: 0,
+                                pointHoverRadius: 0,
+                                tension: 0.1,
+                                spanGaps: true
+                            },
+                            {
+                                label: `Limit: ${limitValue}`,
+                                data: limitData,
+                                borderColor: '#FF6B6B',
+                                backgroundColor: 'transparent',
+                                borderWidth: 2,
+                                fill: false,
+                                pointRadius: 0,
+                                pointHoverRadius: 0,
+                                borderDash: [5, 5],
+                                spanGaps: true
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: false,
+                        interaction: {
+                            intersect: false,
+                            mode: 'nearest'
+                        },
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#ffffffe1',
+                                    font: {
+                                        size: 11
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                enabled: true,
+                                mode: 'nearest',
+                                callbacks: {
+                                    title: function (context) {
+                                        if (context && context[0] && sampledData[context[0].dataIndex]) {
+                                            const date = sampledData[context[0].dataIndex].date;
+                                            return date.toLocaleDateString('cs-CZ');
+                                        }
+                                        return '';
+                                    },
+                                    label: function (context) {
+                                        if (context.datasetIndex === 0) {
+                                            return `Průtok: ${context.parsed.y.toFixed(2)}`;
+                                        } else {
+                                            return `Limit: ${context.parsed.y}`;
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    color: '#ffffffe1',
+                                    maxTicksLimit: 15,
+                                    font: {
+                                        size: 10
+                                    }
+                                },
+                                grid: {
+                                    color: '#272835'
+                                },
+                                title: {
+                                    display: true,
+                                    text: `Roky (${startYear} - ${endYear})`,
+                                    color: '#ffffffe1'
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                max: yAxisMax,
+                                ticks: {
+                                    color: '#ffffffe1',
+                                    font: {
+                                        size: 10
+                                    }
+                                },
+                                grid: {
+                                    color: '#272835'
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Průtok',
+                                    color: '#ffffffe1'
+                                }
+                            }
+                        }
+                    }
+                });
+
+                console.log(`Chart created successfully showing data from ${startYear} to ${endYear}`);
+
+                // Add limit display in corner
+                const chartContainer = canvas.parentElement;
+                if (chartContainer) {
+                    chartContainer.style.position = 'relative';
+
+                    // Remove existing display
+                    const existing = chartContainer.querySelector('.limit-display');
+                    if (existing) existing.remove();
+
+                    // Add new display
+                    const limitDisplay = document.createElement('div');
+                    limitDisplay.className = 'limit-display';
+                    limitDisplay.style.cssText = `
+                position: absolute;
+                top: 20px;
+                right: 20px;
+                background: rgba(0,0,0,0.7);
+                color: #ffffffe1;
+                padding: 5px 10px;
+                border-radius: 3px;
+                font-size: 12px;
+                pointer-events: none;
+                z-index: 1000;
+            `;
+                    limitDisplay.textContent = `Limit: ${limitValue}`;
+                    chartContainer.appendChild(limitDisplay);
+                }
+
+            } catch (error) {
+                console.error('Error creating time series chart:', error);
+                console.error('Stack trace:', error.stack);
+
+                // Simple error display
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#FF6B6B';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Chyba při vytváření grafu', canvas.width / 2, canvas.height / 2);
+            }
+        }
+
+        /**
+         * parseDateDDMMYYYY:
+         * Converts text in format
+         *   "DD/MM/YYYY hh:mm:ss" or "DD/MM/YYYY hh:mm:ss AM/PM"
+         *   (e.g. "27/11/2001 07:00:00" or "27/11/2001 07:00:00 PM")
+         * to JavaScript Date. If it fails, returns null.
+         */
+        function parseDateDDMMYYYY(raw) {
+            raw = raw.trim();
+            if (raw.length === 0) return null;
+            // Split by space: [datePart, timePart, (optional) AM/PM]
+            const parts = raw.split(' ');
+            if (parts.length < 2) return null;
+            const datePart = parts[0];                // "DD/MM/YYYY"
+            const timePart = parts[1];                // "hh:mm:ss"
+            const ampmPart = (parts.length === 3) ? parts[2].toUpperCase() : '';
+
+            const dateFields = datePart.split('/');
+            if (dateFields.length !== 3) return null;
+            let day = parseInt(dateFields[0], 10);
+            let month = parseInt(dateFields[1], 10);
+            let year = parseInt(dateFields[2], 10);
+            if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+
+            const timeFields = timePart.split(':');
+            if (timeFields.length !== 3) return null;
+            let hour = parseInt(timeFields[0], 10);
+            const minute = parseInt(timeFields[1], 10);
+            const second = parseInt(timeFields[2], 10);
+            if (isNaN(hour) || isNaN(minute) || isNaN(second)) return null;
+
+            // Adjust to 24h according to AM/PM
+            if (ampmPart === 'AM') {
+                if (hour === 12) hour = 0;
+            } else if (ampmPart === 'PM') {
+                if (hour < 12) hour += 12;
+            }
+
+            const dt = new Date(year, month - 1, day, hour, minute, second);
+            return isNaN(dt.getTime()) ? null : dt;
+        }
+    </script>
+</body>
+
+</html>
