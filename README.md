@@ -36,13 +36,13 @@
 
 <h2 align="left">CABRRE - Capacity Breach Report Application</h1>
 
-<h3 align="left">Overview</h5>
+<h3 align="left">Overview</h3>
 
 CABRRE (Capacity Breach Report) is developed for the Ohře River Basin Authority as a decision-support tool for assessing temporary overflow capacity at spillways and preparing official breach capacity reports.
 
 <br>
 
-<h3 align="left">How It Works</h5>
+<h3 align="left">How It Works</h3>
 
 **<p>1) Data processing pipeline</p>**
 ```text
@@ -66,7 +66,7 @@ When user inputs a `limit value`, the app calculates:
 
 <br>
 
-<h3 align="left">Technical Architecture</h5>
+<h3 align="left">Technical Architecture</h3>
 
 **Frontend**
 - Vanilla HTML5/CSS3/JavaScript
